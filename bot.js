@@ -4,27 +4,23 @@ const axios = require('axios');
 async function runBankingBot() {
   console.log("Bot စတင် အလုပ်လုပ်နေပါပြီ...");
   
-  // Chromium Browser ကို နောက်ကွယ်မှ ဖွင့်ခြင်း
-  const browser = await puppeteer.launch({ 
-        
-    const browser = await puppeteer.launch({
-    headless: "new",
-    args: [
+  let browser;
+  try {
+    // Chromium Browser ကို Render Server အတွက် သင့်တော်သော Option များဖြင့် ဖွင့်ခြင်း
+    browser = await puppeteer.launch({
+      headless: "new",
+      executablePath: puppeteer.executablePath(),
+      args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--single-process",
         "--no-zygote"
-    ]
+      ]
     });
-    
-    headless: false, // စမ်းသပ်နေစဉ် ဘရောက်ဇာ ပွင့်လာတာ ကြည့်ချင်ပါက false ထားပါ
-    defaultViewport: null 
-  });
 
-  const page = await browser.newPage();
+    const page = await browser.newPage();
 
-  try {
     // 1. ဘဏ် သို့မဟုတ် Merchant Portal Login စာမျက်နှာသို့ သွားခြင်း
     await page.goto('https://your-bank-portal.com/login', { waitUntil: 'networkidle2' });
 
@@ -39,14 +35,13 @@ async function runBankingBot() {
     // 3. ငွေဝင်စာရင်း Table ထဲမှ Transaction ID နှင့် Amount များကို ဆွဲယူခြင်း
     const transactions = await page.evaluate(() => {
       let data = [];
-      // Table row များကို လိုက်ဖတ်ခြင်း
       let rows = document.querySelectorAll('table tr'); 
       rows.forEach(row => {
         let cols = row.querySelectorAll('td');
         if (cols.length >= 2) {
           data.push({
-            txnId: cols[0].innerText.trim(),  // Transaction ID ကော်လံ
-            amount: cols[1].innerText.trim()  // ငွေပမာဏ ကော်လံ
+            txnId: cols[0].innerText.trim(),
+            amount: cols[1].innerText.trim()
           });
         }
       });
@@ -66,11 +61,16 @@ async function runBankingBot() {
     }
 
   } catch (error) {
-    console.error("Error ဖြစ်ပွားခဲ့သည် -", error);
+    console.error("Error ဖြစ်ပွားခဲ့သည် -", error.message);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 
 // စက္ကန့် ၃၀ လျှင် တစ်ကြိမ် အလိုအလျောက် ပတ်ခိုင်းခြင်း
 setInterval(runBankingBot, 30000);
+
+// Server စစချင်း အရင်တစ်ကြိမ် တန်းမောင်းပေးခြင်း
+runBankingBot();
