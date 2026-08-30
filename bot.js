@@ -6,6 +6,18 @@ async function runBankingBot() {
   
   // Chromium Browser ကို နောက်ကွယ်မှ ဖွင့်ခြင်း
   const browser = await puppeteer.launch({ 
+        
+    const browser = await puppeteer.launch({
+    headless: "new",
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--single-process",
+        "--no-zygote"
+    ]
+    });
+    
     headless: false, // စမ်းသပ်နေစဉ် ဘရောက်ဇာ ပွင့်လာတာ ကြည့်ချင်ပါက false ထားပါ
     defaultViewport: null 
   });
